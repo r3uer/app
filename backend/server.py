@@ -71,10 +71,13 @@ async def ask_question(request: QuestionRequest):
             await db.conversations.insert_one(conversation.dict())
             conversation_id = conversation.id
         
-        # Initialize LLM Chat with context from previous messages
-        api_key = os.environ.get('EMERGENT_LLM_KEY')
+        # Get API key
+        api_key = os.environ.get('OPENAI_API_KEY')
         if not api_key:
             raise HTTPException(status_code=500, detail="API key not configured")
+        
+        # Initialize OpenAI client
+        client = AsyncOpenAI(api_key=api_key)
         
         # Create system message optimized for DSA and coding interviews
         system_message = """You are an expert DSA and coding interview assistant. 
@@ -89,17 +92,31 @@ For interview questions:
 - Focus on key points
 - Be concise but complete"""
         
-        chat = LlmChat(
-            api_key=api_key,
-            session_id=conversation_id,
-            system_message=system_message
-        ).with_model("openai", "gpt-5.2")
+        # Build messages array with conversation history
+        messages = [{"role": "system", "content": system_message}]
         
-        # Create user message
-        user_msg = UserMessage(text=request.question)
+        # Add previous messages for context
+        for msg in conversation.messages:
+            messages.append({
+                "role": msg.role,
+                "content": msg.content
+            })
         
-        # Get response from LLM
-        response = await chat.send_message(user_msg)
+        # Add current question
+        messages.append({
+            "role": "user",
+            "content": request.question
+        })
+        
+        # Get response from OpenAI
+        completion = await client.chat.completions.create(
+            model="gpt-4o",
+            messages=messages,
+            temperature=0.7,
+            max_tokens=1000
+        )
+        
+        response = completion.choices[0].message.content
         
         # Create message objects
         user_message = Message(
