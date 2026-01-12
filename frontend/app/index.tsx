@@ -166,8 +166,8 @@ export default function Index() {
         >
           {messages.length === 0 ? (
             <View style={styles.emptyState}>
-              <Ionicons name="mic-outline" size={64} color="#666" />
-              <Text style={styles.emptyText}>Ask me anything about DSA!</Text>
+              <Ionicons name="logo-android" size={64} color="#3DDC84" />
+              <Text style={styles.emptyText}>Ask me about Kotlin & Android!</Text>
               <Text style={styles.emptySubtext}>
                 Tap the microphone or type your question
               </Text>
