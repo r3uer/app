@@ -149,7 +149,7 @@ export default function Index() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>DSA Interview Assistant</Text>
+          <Text style={styles.headerTitle}>Kotlin & Android Assistant</Text>
           <TouchableOpacity
             onPress={startNewConversation}
             style={styles.newChatButton}
