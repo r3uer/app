@@ -72,12 +72,9 @@ async def ask_question(request: QuestionRequest):
             conversation_id = conversation.id
         
         # Get API key
-        api_key = os.environ.get('OPENAI_API_KEY')
+        api_key = os.environ.get('EMERGENT_LLM_KEY')
         if not api_key:
             raise HTTPException(status_code=500, detail="API key not configured")
-        
-        # Initialize OpenAI client
-        client = AsyncOpenAI(api_key=api_key)
         
         # Create system message optimized for DSA and coding interviews
         system_message = """You are an expert DSA and coding interview assistant. 
@@ -92,31 +89,18 @@ For interview questions:
 - Focus on key points
 - Be concise but complete"""
         
-        # Build messages array with conversation history
-        messages = [{"role": "system", "content": system_message}]
+        # Initialize LLM Chat
+        chat = LlmChat(
+            api_key=api_key,
+            session_id=conversation_id,
+            system_message=system_message
+        ).with_model("openai", "gpt-4o")
         
-        # Add previous messages for context
-        for msg in conversation.messages:
-            messages.append({
-                "role": msg.role,
-                "content": msg.content
-            })
+        # Create user message
+        user_msg = UserMessage(text=request.question)
         
-        # Add current question
-        messages.append({
-            "role": "user",
-            "content": request.question
-        })
-        
-        # Get response from OpenAI
-        completion = await client.chat.completions.create(
-            model="gpt-4o",
-            messages=messages,
-            temperature=0.7,
-            max_tokens=1000
-        )
-        
-        response = completion.choices[0].message.content
+        # Get response from LLM
+        response = await chat.send_message(user_msg)
         
         # Create message objects
         user_message = Message(
